@@ -1,3 +1,15 @@
+#Explanation:
+The code first creates a temporary table called "all_data". 
+It selects data from two tables where the "start_station_name" and "end_station_name" columns are combined into a single column called "station_name". 
+It also selects latitude and longitude data for each station and concatenates them into a single "location" string.
+
+The query also calculates the total number of rides for each station, day of the week, 
+and user type (member or casual) and sorts the result by the start date and station name.
+
+In the second part of the query, the code selects the station name, user type, location, and median number of rides per day for each station and user type. 
+The median number of rides is calculated using the "PERCENTILE_CONT" function, and it is calculated over each group of member type, station, and location.
+
+
 WITH all_data AS
 (SELECT
     member_casual,
