@@ -1,0 +1,50 @@
+WITH all_data AS
+(SELECT
+    member_casual,
+    station_name,
+    CONCAT(ROUND(AVG(lat), 4), ",", ROUND(AVG(lng), 4)) AS location,
+    COUNT(ride_id) AS number_of_rides,
+    started_at_date,
+    EXTRACT(dayofweek FROM started_at_date) AS started_day_ofw
+FROM
+    (SELECT
+        DISTINCT start_station_name AS station_name,
+        start_lat AS lat,
+        start_lng AS lng,
+        member_casual,
+        EXTRACT(date FROM started_at) AS started_at_date,
+        ride_id
+    FROM 
+        `cyclistic-379109.12month.final`
+    UNION DISTINCT 
+    SELECT
+        DISTINCT end_station_name AS station_name,
+        end_lat AS lat,
+        end_lng AS lng,
+        member_casual,
+        EXTRACT(date FROM started_at) AS started_at_date,
+        ride_id
+    FROM 
+        `cyclistic-379109.12month.final`)
+GROUP BY 
+    member_casual,
+    station_name,
+    started_at_date,
+    started_day_ofw
+ORDER BY 
+    started_at_date,
+    station_name)
+SELECT 
+    DISTINCT station_name,
+    member_casual,
+    location,
+    PERCENTILE_CONT(number_of_rides, 0.5) OVER (PARTITION BY member_casual, station_name, location) AS median_rides
+FROM 
+    all_data 
+WHERE 
+    started_day_ofw in (2,3,4,5,6)
+    --(1,7) for weekends
+ORDER BY 
+    median_rides DESC
+LIMIT 
+    400
