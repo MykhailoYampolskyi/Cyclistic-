@@ -1,3 +1,18 @@
+#Explanation:
+The query first creates a temporary table named "alltable" that selects all columns from the "fullyear" table. 
+It then creates another temporary table named "clean_stations" that selects the ride ID, start and end station IDs, 
+and cleans up the start and end station names by removing specific substrings.
+
+Next, the query creates another temporary table named "newtable" that selects the ride ID, the length of the ride in minutes, the month, day of the week, 
+and hour the ride started.
+
+Finally, the query selects specific columns from the "alltable", "clean_stations", and "newtable" tables and joins them based on ride ID. 
+It also filters out rows where the start or end station name or ID is NULL and contains specific substrings that were removed earlier in the cleaning process. 
+(Upon further inspection I noticed that many rows were not filtered using REPLACE function, so I decided to delete them).
+
+
+
+
 WITH
 alltable AS
   (SELECT *
