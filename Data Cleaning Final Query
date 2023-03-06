@@ -1,4 +1,40 @@
-#I then created a new  table adding a column with the length of each ride in minutes, 
+#1) Joined tables by using UNION query 
+
+SELECT DISTINCT ride_id, 
+rideable_type, 
+started_at, 
+ended_at, 
+start_station_name, 
+start_station_id, 
+end_station_name, 
+end_station_id, 
+start_lat, 
+start_lng, 
+end_lat, 
+end_lng, 
+member_casual
+FROM `cyclistic-379109.12month.2022_01_trips`
+UNION ALL
+
+SELECT DISTINCT ride_id, 
+rideable_type, 
+started_at, 
+ended_at, 
+start_station_name, 
+start_station_id, 
+end_station_name, 
+end_station_id, 
+start_lat, 
+start_lng, 
+end_lat, 
+end_lng, 
+member_casual
+FROM `cyclistic-379109.12month.2022_02_trips`
+UNION ALL
+
+(etc. for the rest of the tables)
+
+#2) Created a new  table adding a column with the length of each ride in minutes, 
 the month the ride took place in and a column for the day of the week the ride took place (1 = Sunday, 7 = Saturday).
 
 
