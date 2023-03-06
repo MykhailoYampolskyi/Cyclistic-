@@ -1,0 +1,14 @@
+SELECT 
+        TotalTrips,
+        TotalMemberTrips,
+        TotalCasualTrips,
+        ROUND(TotalMemberTrips/TotalTrips,2)*100 AS MemberPercentage,
+        ROUND(TotalCasualTrips/TotalTrips,2)*100 AS CasualPercentage
+FROM 
+        (
+        SELECT
+                COUNT(ride_id) AS TotalTrips,
+                COUNTIF(member_casual = 'member') AS TotalMemberTrips,
+                COUNTIF(member_casual = 'casual') AS TotalCasualTrips,
+        FROM
+                `cyclistic-379109.12month.final`) 
