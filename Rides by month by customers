@@ -1,0 +1,11 @@
+SELECT 
+    member_casual,
+    COUNT(ride_id) AS number_of_rides,
+    started_month AS month
+FROM 
+    `cyclistic-379109.12month.final` 
+GROUP BY 
+    month,
+    member_casual
+ORDER BY 
+    number_of_rides desc
