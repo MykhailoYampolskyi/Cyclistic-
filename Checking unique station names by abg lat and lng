@@ -23,7 +23,7 @@ WITH names AS
                 start_lat AS start_lat,
                 start_lng AS start_lng
             FROM
-           `cyclistic-379109.12month.final` )
+           `cyclistic-379109.12month.fullyear` )
         UNION DISTINCT 
         SELECT
             DISTINCT end_station_name AS station_name,
@@ -35,7 +35,7 @@ WITH names AS
                 end_lat AS end_lat,
                 end_lng AS end_lng
             FROM
-            `cyclistic-379109.12month.final` ))
+            `cyclistic-379109.12month.fullyear` ))
     WHERE 
         station_name is not null
     GROUP BY 
@@ -62,7 +62,7 @@ duplicates as
                     start_lat AS start_lat,
                     start_lng AS start_lng
                 FROM
-                `cyclistic-379109.12month.final` )
+                `cyclistic-379109.12month.fullyear` )
             UNION DISTINCT 
             SELECT
                 DISTINCT end_station_name AS station_name,
@@ -74,7 +74,7 @@ duplicates as
                     end_lat AS end_lat,
                     end_lng AS end_lng
                 FROM
-                `cyclistic-379109.12month.final` ))
+                `cyclistic-379109.12month.fullyear` ))
         WHERE 
             station_name is not null
         GROUP BY 
