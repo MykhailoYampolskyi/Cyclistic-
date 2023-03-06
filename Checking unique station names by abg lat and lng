@@ -1,0 +1,86 @@
+WITH names AS
+    (SELECT 
+        station_name,
+        ROUND(AVG(lat), 3) AS lat,
+        ROUND(AVG(lng), 3) AS lng
+    FROM
+        (SELECT
+            DISTINCT start_station_name AS station_name,
+            start_lat AS lat,
+            start_lng AS lng
+        FROM 
+            (SELECT
+                start_station_name AS start_station_name,
+                start_lat AS start_lat,
+                start_lng AS start_lng
+            FROM
+           `cyclistic-379109.12month.final` )
+        UNION DISTINCT 
+        SELECT
+            DISTINCT end_station_name AS station_name,
+            end_lat AS lat,
+            end_lng AS lng
+        FROM 
+            (SELECT
+                end_station_name AS end_station_name,
+                end_lat AS end_lat,
+                end_lng AS end_lng
+            FROM
+            `cyclistic-379109.12month.final` ))
+    WHERE 
+        station_name is not null
+    GROUP BY 
+        station_name),
+
+duplicates as
+    (SELECT
+        lat,
+        lng,
+        COUNT(station_name) AS cnt
+    FROM
+        (SELECT 
+            station_name,
+            ROUND(AVG(lat), 3) AS lat,
+            ROUND(AVG(lng), 3) AS lng
+        FROM
+            (SELECT
+                DISTINCT start_station_name AS station_name,
+                start_lat AS lat,
+                start_lng AS lng
+            FROM 
+                (SELECT
+                    start_station_name AS start_station_name,
+                    start_lat AS start_lat,
+                    start_lng AS start_lng
+                FROM
+                `cyclistic-379109.12month.final` )
+            UNION DISTINCT 
+            SELECT
+                DISTINCT end_station_name AS station_name,
+                end_lat AS lat,
+                end_lng AS lng
+            FROM 
+                (SELECT
+                    end_station_name AS end_station_name,
+                    end_lat AS end_lat,
+                    end_lng AS end_lng
+                FROM
+                `cyclistic-379109.12month.final` ))
+        WHERE 
+            station_name is not null
+        GROUP BY 
+            station_name)
+GROUP BY lat, lng
+ORDER BY cnt DESC)
+SELECT 
+    names.station_name,
+    names.lat,
+    names.lng,
+    duplicates.cnt
+FROM 
+    names,
+    duplicates 
+WHERE 
+    names.lat = duplicates.lat AND
+    names.lng = duplicates.lng
+ORDER BY duplicates.cnt DESC, duplicates.lat ASC, duplicates.lng ASC
