@@ -1,2 +1,32 @@
-s
-g
+#I then created a new  table adding a column with the length of each ride in minutes, 
+the month the ride took place in and a column for the day of the week the ride took place (1 = Sunday, 7 = Saturday).
+
+
+SELECT ride_id,
+            rideable_type,
+            started_at,
+            ended_at,
+            TIMESTAMP_DIFF(ended_at, started_at, minute) AS ride_length_minutes,
+            EXTRACT(DAYOFWEEK FROM started_at) AS started_day,
+            EXTRACT(MONTH FROM started_at) AS started_month,
+            EXTRACT(HOUR FROM started_at) AS started_hour,
+            start_station_name,
+            start_station_id,
+            end_station_name,
+            end_station_id,
+            start_lat,
+            start_lng,
+            end_lat,
+            end_lng,
+            member_casual
+FROM `cyclistic-379109.12month.fullyear`
+
+
+
+#Then, I checked how many null values are there in the table. 
+They appeared to be in start_station_name, start_station_id, end_station_name, end_station_id. The total number of records is 5,667,717. 
+After removing the total number is 4,369,360 or 22% from the total number of records were deleted. 
+Going forward, I performed the same analysis for the table with NULL values present, and it didn't affect the conclusions.
+
+
+
