@@ -1,0 +1,15 @@
+UPDATE 
+`cyclistic-379109.12month.final` 
+SET  
+started_day = 
+CASE
+    WHEN started_day = '1' THEN 'Sunday'
+    WHEN started_day = '2' THEN 'Monday'
+    WHEN started_day = '3' THEN 'Tuesday'
+    WHEN started_day = '4' THEN 'Wednesday' 
+    WHEN started_day = '5' THEN 'Thursday'
+    WHEN started_day = '6' THEN 'Friday'
+    WHEN started_day = '7' THEN 'Saturday' 
+END
+WHERE
+started_day IN ('1', '2', '3', '4', '5', '6', '7')
