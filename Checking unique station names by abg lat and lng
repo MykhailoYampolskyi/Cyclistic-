@@ -1,3 +1,12 @@
+#Explanation: 
+The query first creates a CTE called names that selects the distinct start and end station names, 
+and rounds the average latitude and longitude values for each station to three decimal places. 
+The WHERE clause filters out any null station names.
+The query then creates another CTE called duplicates that selects the rounded average latitude and longitude values for each station, 
+counts the number of times each set of latitude and longitude values appears. 
+Finally, the query selects the station name, rounded average latitude and longitude values, and count of stations from both CTEs, 
+joining them on the rounded average latitude and longitude values. 
+
 WITH names AS
     (SELECT 
         station_name,
