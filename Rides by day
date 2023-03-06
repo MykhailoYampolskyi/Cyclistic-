@@ -1,0 +1,12 @@
+
+SELECT  
+        started_day,
+        COUNT(DISTINCT ride_id) AS Total,
+        SUM(CASE WHEN member_casual = 'member' THEN 1 ELSE 0 END) AS MemberTrips,
+        SUM(CASE WHEN member_casual = 'casual' THEN 1 ELSE 0 END) AS CasualTrips
+FROM 
+`cyclistic-379109.12month.final` 
+GROUP BY
+started_day
+ORDER BY 
+Total DESC 
