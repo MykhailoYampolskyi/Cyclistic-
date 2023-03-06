@@ -1,0 +1,12 @@
+SELECT
+DISTINCT median_ride_length,
+member_casual
+
+FROM(
+SELECT 
+member_casual,
+ride_length_minutes,
+PERCENTILE_DISC(ride_length_minutes, 0.5) OVER(PARTITION BY member_casual) AS  median_ride_length
+FROM `cyclistic-379109.12month.final` )
+ORDER BY 
+median_ride_length DESC 
