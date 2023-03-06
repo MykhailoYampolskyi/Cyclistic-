@@ -1,68 +1,63 @@
-#1) Joined tables by using UNION query 
+WITH
+alltable AS
+  (SELECT *
+  FROM `cyclistic-379109.12month.fullyear`),
+  clean_stations AS
+  (SELECT 
+      ride_id,
+      start_station_id,
+      end_station_id,
+      TRIM(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(start_station_name, '(*)', ''), '(Temp)', ''), '(Public Rack - )', ''), '(amp;)', ''), '(- Charging)', '')) AS start_station_name,
+      TRIM(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(end_station_name, '(*)', ''), '(Temp)', ''), '(Public Rack - )', ''), '(amp;)', ''), '(- Charging)', '')) AS end_station_name,
+   FROM alltable),
+  newtable AS
+    (SELECT
+      ride_id,
+        TIMESTAMP_DIFF(ended_at, started_at, minute) AS ride_length_minutes,
+        EXTRACT(MONTH FROM started_at) AS started_month,
+        EXTRACT(DAYOFWEEK FROM started_at) AS started_day,
+        EXTRACT(HOUR FROM started_at) AS started_hour
+    FROM 
+        alltable)
+SELECT 
+    alltable.ride_id,
+    alltable.rideable_type,
+    alltable.started_at,
+    alltable.ended_at,
+    clean_stations.start_station_name,
+    alltable.start_station_id,
+    clean_stations.end_station_name,
+    alltable.end_station_id,
+    alltable.start_lat,
+    alltable.start_lng,
+    alltable.end_lat,
+    alltable.end_lng,
+    alltable.member_casual,
+    newtable.ride_length_minutes,
+    newtable.started_month,
+    CAST(newtable.started_day AS STRING) as started_day,
+    newtable.started_hour
+FROM 
+    alltable
+JOIN 
+    clean_stations ON alltable.ride_id = clean_stations.ride_id
+JOIN 
+    newtable ON clean_stations.ride_id = newtable.ride_id
+WHERE 
+    clean_stations.start_station_name is not null AND
+    clean_stations.start_station_name NOT LIKE '%*%' AND
+    clean_stations.start_station_name NOT LIKE '%Public Rack%' AND 
+    clean_stations.start_station_name NOT LIKE '%Charging%' AND
+    clean_stations.start_station_name NOT LIKE '%amp; %' AND
+    clean_stations.start_station_id is not null AND
+    clean_stations.end_station_name is not null AND
+    clean_stations.end_station_name NOT LIKE '%*%' AND
+    clean_stations.end_station_name NOT LIKE '%Public Rack%' AND 
+    clean_stations.end_station_name NOT LIKE '%Charging%' AND
+    clean_stations.end_station_name NOT LIKE '%amp; %' AND
+    clean_stations.end_station_id is not null
 
-SELECT DISTINCT ride_id, 
-rideable_type, 
-started_at, 
-ended_at, 
-start_station_name, 
-start_station_id, 
-end_station_name, 
-end_station_id, 
-start_lat, 
-start_lng, 
-end_lat, 
-end_lng, 
-member_casual
-FROM `cyclistic-379109.12month.2022_01_trips`
-UNION ALL
-
-SELECT DISTINCT ride_id, 
-rideable_type, 
-started_at, 
-ended_at, 
-start_station_name, 
-start_station_id, 
-end_station_name, 
-end_station_id, 
-start_lat, 
-start_lng, 
-end_lat, 
-end_lng, 
-member_casual
-FROM `cyclistic-379109.12month.2022_02_trips`
-UNION ALL
-
-(etc. for the rest of the tables)
-
-#2) Created a new  table adding a column with the length of each ride in minutes, 
-the month the ride took place in and a column for the day of the week the ride took place (1 = Sunday, 7 = Saturday).
-
-
-SELECT ride_id,
-            rideable_type,
-            started_at,
-            ended_at,
-            TIMESTAMP_DIFF(ended_at, started_at, minute) AS ride_length_minutes,
-            EXTRACT(DAYOFWEEK FROM started_at) AS started_day,
-            EXTRACT(MONTH FROM started_at) AS started_month,
-            EXTRACT(HOUR FROM started_at) AS started_hour,
-            start_station_name,
-            start_station_id,
-            end_station_name,
-            end_station_id,
-            start_lat,
-            start_lng,
-            end_lat,
-            end_lng,
-            member_casual
-FROM `cyclistic-379109.12month.fullyear`
-
-
-
-#Then, I checked how many null values are there in the table. 
-They appeared to be in start_station_name, start_station_id, end_station_name, end_station_id. The total number of records is 5,667,717. 
-After removing the total number is 4,369,360 or 22% from the total number of records were deleted. 
-Going forward, I performed the same analysis for the table with NULL values present, and it didn't affect the conclusions.
+         
 
 
 
