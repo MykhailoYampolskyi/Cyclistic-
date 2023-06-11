@@ -1,4 +1,40 @@
-###1)
+# 1) Merging tables
+SELECT DISTINCT ride_id, 
+rideable_type, 
+started_at, 
+ended_at, 
+start_station_name, 
+start_station_id, 
+end_station_name, 
+end_station_id, 
+start_lat, 
+start_lng, 
+end_lat, 
+end_lng, 
+member_casual
+FROM `cyclistic-379109.12month.2022_01_trips`
+UNION ALL
+
+SELECT DISTINCT ride_id, 
+rideable_type, 
+started_at, 
+ended_at, 
+start_station_name, 
+start_station_id, 
+end_station_name, 
+end_station_id, 
+start_lat, 
+start_lng, 
+end_lat, 
+end_lng, 
+member_casual
+FROM `cyclistic-379109.12month.2022_02_trips`
+UNION ALL
+
+(etc. for the rest of the tables)
+-----------------------------------------------------
+2) CAST for days of the week
+
 UPDATE 
 `cyclistic-379109.12month.final` 
 SET  
@@ -14,3 +50,368 @@ CASE
 END
 WHERE
 started_day IN ('1', '2', '3', '4', '5', '6', '7')
+-----------------------------------------------------
+
+3) Median ride length by day
+SELECT
+        DISTINCT median_ride_length,
+        member_casual,
+        started_day
+FROM 
+        (
+        SELECT
+                ride_id,
+                member_casual,
+                started_day,
+                ride_length_minutes,
+                PERCENTILE_DISC(ride_length_minutes, 0.5) OVER(PARTITION BY started_day) AS median_ride_length
+        FROM
+                 `cyclistic-379109.12month.final` 
+WHERE
+                member_casual = 'member' or
+                member_casual = 'casual'
+        )
+ORDER BY
+        median_ride_length DESC
+-----------------------------------------------------
+4) Median ride length total
+SELECT
+DISTINCT median_ride_length,
+member_casual
+
+FROM(
+SELECT 
+member_casual,
+ride_length_minutes,
+PERCENTILE_DISC(ride_length_minutes, 0.5) OVER(PARTITION BY member_casual) AS  median_ride_length
+FROM `cyclistic-379109.12month.final` )
+ORDER BY 
+median_ride_length DESC 
+-----------------------------------------------------
+5) No of rides per day
+
+SELECT  
+        started_day,
+        COUNT(DISTINCT ride_id) AS Total,
+        SUM(CASE WHEN member_casual = 'member' THEN 1 ELSE 0 END) AS MemberTrips,
+        SUM(CASE WHEN member_casual = 'casual' THEN 1 ELSE 0 END) AS CasualTrips
+FROM 
+`cyclistic-379109.12month.final` 
+GROUP BY
+started_day
+ORDER BY 
+Total DESC 
+-----------------------------------------------------
+6) No of rides by hour per day
+SELECT
+        hour,
+        no_of_rides,
+        member_casual,
+        started_day
+FROM 
+      (
+      SELECT
+      started_day,
+          CONCAT(started_hour, ":00") AS hour,
+          COUNT(ride_id) AS no_of_rides,
+          member_casual
+      FROM
+         `cyclistic-379109.12month.final` 
+
+      WHERE 
+        started_day = 'Monday' OR
+        started_day = 'Tuesday' OR
+        started_day = 'Wednesday' OR
+        started_day = 'Thursday' OR
+        started_day = 'Friday' 
+        --started_day = 'Saturday' OR 
+        --started_day = 'Sunday' 
+        
+      GROUP BY 
+          started_hour,
+          member_casual,
+          started_day
+        )
+GROUP BY 
+        hour, no_of_rides, member_casual, started_day
+ORDER BY 
+        no_of_rides desc
+-----------------------------------------------------
+7) No of rides per month by customer type
+SELECT 
+    member_casual,
+    COUNT(ride_id) AS number_of_rides,
+    started_month AS month
+FROM 
+    `cyclistic-379109.12month.final` 
+GROUP BY 
+    month,
+    member_casual
+ORDER BY 
+    number_of_rides desc
+-----------------------------------------------------
+8) Total trips by customer type
+SELECT 
+        TotalTrips,
+        TotalMemberTrips,
+        TotalCasualTrips,
+        ROUND(TotalMemberTrips/TotalTrips,2)*100 AS MemberPercentage,
+        ROUND(TotalCasualTrips/TotalTrips,2)*100 AS CasualPercentage
+FROM 
+        (
+        SELECT
+                COUNT(ride_id) AS TotalTrips,
+                COUNTIF(member_casual = 'member') AS TotalMemberTrips,
+                COUNTIF(member_casual = 'casual') AS TotalCasualTrips,
+        FROM
+                `cyclistic-379109.12month.final`) 
+-----------------------------------------------------
+9) Bike type
+SELECT 
+    member_casual,
+    rideable_type,
+    COUNT(rideable_type) AS bike_type
+FROM 
+    `cyclistic-379109.12month.final` 
+GROUP BY
+    member_casual,
+    rideable_type
+-----------------------------------------------------
+10) Finding popular stations
+#Explanation:
+The code first creates a temporary table called "all_data". 
+It selects data from two tables where the "start_station_name" and "end_station_name" columns are combined into a single column called "station_name". 
+It also selects latitude and longitude data for each station and concatenates them into a single "location" string.
+
+The query also calculates the total number of rides for each station, day of the week, 
+and user type (member or casual) and sorts the result by the start date and station name.
+
+In the second part of the query, the code selects the station name, user type, location, and median number of rides per day for each station and user type. 
+The median number of rides is calculated using the "PERCENTILE_CONT" function, and it is calculated over each group of member type, station, and location.
+
+
+WITH all_data AS
+(SELECT
+    member_casual,
+    station_name,
+    CONCAT(ROUND(AVG(lat), 4), ",", ROUND(AVG(lng), 4)) AS location,
+    COUNT(ride_id) AS number_of_rides,
+    started_at_date,
+    EXTRACT(dayofweek FROM started_at_date) AS started_day_ofw
+FROM
+    (SELECT
+        DISTINCT start_station_name AS station_name,
+        start_lat AS lat,
+        start_lng AS lng,
+        member_casual,
+        EXTRACT(date FROM started_at) AS started_at_date,
+        ride_id
+    FROM 
+        `cyclistic-379109.12month.final`
+    UNION DISTINCT 
+    SELECT
+        DISTINCT end_station_name AS station_name,
+        end_lat AS lat,
+        end_lng AS lng,
+        member_casual,
+        EXTRACT(date FROM started_at) AS started_at_date,
+        ride_id
+    FROM 
+        `cyclistic-379109.12month.final`)
+GROUP BY 
+    member_casual,
+    station_name,
+    started_at_date,
+    started_day_ofw
+ORDER BY 
+    started_at_date,
+    station_name)
+SELECT 
+    DISTINCT station_name,
+    member_casual,
+    location,
+    PERCENTILE_CONT(number_of_rides, 0.5) OVER (PARTITION BY member_casual, station_name, location) AS median_rides
+FROM 
+    all_data 
+WHERE 
+    started_day_ofw in (2,3,4,5,6)
+    --(1,7) for weekends
+ORDER BY 
+    median_rides DESC
+LIMIT 
+    400
+-----------------------------------------------------
+11) Checking for unique station names by AVG lat and long
+#Explanation: 
+The query first creates a CTE called names that selects the distinct start and end station names, 
+and rounds the average latitude and longitude values for each station to three decimal places. 
+The WHERE clause filters out any null station names.
+The query then creates another CTE called duplicates that selects the rounded average latitude and longitude values for each station, 
+counts the number of times each set of latitude and longitude values appears. 
+Finally, the query selects the station name, rounded average latitude and longitude values, and count of stations from both CTEs, 
+joining them on the rounded average latitude and longitude values. 
+
+WITH names AS
+    (SELECT 
+        station_name,
+        ROUND(AVG(lat), 3) AS lat,
+        ROUND(AVG(lng), 3) AS lng
+    FROM
+        (SELECT
+            DISTINCT start_station_name AS station_name,
+            start_lat AS lat,
+            start_lng AS lng
+        FROM 
+            (SELECT
+                start_station_name AS start_station_name,
+                start_lat AS start_lat,
+                start_lng AS start_lng
+            FROM
+           `cyclistic-379109.12month.fullyear` )
+        UNION DISTINCT 
+        SELECT
+            DISTINCT end_station_name AS station_name,
+            end_lat AS lat,
+            end_lng AS lng
+        FROM 
+            (SELECT
+                end_station_name AS end_station_name,
+                end_lat AS end_lat,
+                end_lng AS end_lng
+            FROM
+            `cyclistic-379109.12month.fullyear` ))
+    WHERE 
+        station_name is not null
+    GROUP BY 
+        station_name),
+
+duplicates as
+    (SELECT
+        lat,
+        lng,
+        COUNT(station_name) AS cnt
+    FROM
+        (SELECT 
+            station_name,
+            ROUND(AVG(lat), 3) AS lat,
+            ROUND(AVG(lng), 3) AS lng
+        FROM
+            (SELECT
+                DISTINCT start_station_name AS station_name,
+                start_lat AS lat,
+                start_lng AS lng
+            FROM 
+                (SELECT
+                    start_station_name AS start_station_name,
+                    start_lat AS start_lat,
+                    start_lng AS start_lng
+                FROM
+                `cyclistic-379109.12month.fullyear` )
+            UNION DISTINCT 
+            SELECT
+                DISTINCT end_station_name AS station_name,
+                end_lat AS lat,
+                end_lng AS lng
+            FROM 
+                (SELECT
+                    end_station_name AS end_station_name,
+                    end_lat AS end_lat,
+                    end_lng AS end_lng
+                FROM
+                `cyclistic-379109.12month.fullyear` ))
+        WHERE 
+            station_name is not null
+        GROUP BY 
+            station_name)
+GROUP BY lat, lng
+ORDER BY cnt DESC)
+SELECT 
+    names.station_name,
+    names.lat,
+    names.lng,
+    duplicates.cnt
+FROM 
+    names,
+    duplicates 
+WHERE 
+    names.lat = duplicates.lat AND
+    names.lng = duplicates.lng
+ORDER BY duplicates.cnt DESC, duplicates.lat ASC, duplicates.lng ASC
+-----------------------------------------------------
+12) Data cleaning final query 
+#Explanation:
+The query first creates a temporary table named "alltable" that selects all columns from the "fullyear" table. 
+It then creates another temporary table named "clean_stations" that selects the ride ID, start and end station IDs, 
+and cleans up the start and end station names by removing specific substrings.
+
+Next, the query creates another temporary table named "newtable" that selects the ride ID, the length of the ride in minutes, the month, day of the week, 
+and hour the ride started.
+
+Finally, the query selects specific columns from the "alltable", "clean_stations", and "newtable" tables and joins them based on ride ID. 
+It also filters out rows where the start or end station name or ID is NULL and contains specific substrings that were removed earlier in the cleaning process. 
+(Upon further inspection I noticed that many rows were not filtered using REPLACE function, so I decided to delete them).
+
+
+
+
+WITH
+alltable AS
+  (SELECT *
+  FROM `cyclistic-379109.12month.fullyear`),
+  clean_stations AS
+  (SELECT 
+      ride_id,
+      start_station_id,
+      end_station_id,
+      TRIM(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(start_station_name, '(*)', ''), '(Temp)', ''), '(Public Rack - )', ''), '(amp;)', ''), '(- Charging)', '')) AS start_station_name,
+      TRIM(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(end_station_name, '(*)', ''), '(Temp)', ''), '(Public Rack - )', ''), '(amp;)', ''), '(- Charging)', '')) AS end_station_name,
+   FROM alltable),
+  newtable AS
+    (SELECT
+      ride_id,
+        TIMESTAMP_DIFF(ended_at, started_at, minute) AS ride_length_minutes,
+        EXTRACT(MONTH FROM started_at) AS started_month,
+        EXTRACT(DAYOFWEEK FROM started_at) AS started_day,
+        EXTRACT(HOUR FROM started_at) AS started_hour
+    FROM 
+        alltable)
+SELECT 
+    alltable.ride_id,
+    alltable.rideable_type,
+    alltable.started_at,
+    alltable.ended_at,
+    clean_stations.start_station_name,
+    alltable.start_station_id,
+    clean_stations.end_station_name,
+    alltable.end_station_id,
+    alltable.start_lat,
+    alltable.start_lng,
+    alltable.end_lat,
+    alltable.end_lng,
+    alltable.member_casual,
+    newtable.ride_length_minutes,
+    newtable.started_month,
+    CAST(newtable.started_day AS STRING) as started_day,
+    newtable.started_hour
+FROM 
+    alltable
+JOIN 
+    clean_stations ON alltable.ride_id = clean_stations.ride_id
+JOIN 
+    newtable ON clean_stations.ride_id = newtable.ride_id
+WHERE 
+    clean_stations.start_station_name is not null AND
+    clean_stations.start_station_name NOT LIKE '%*%' AND
+    clean_stations.start_station_name NOT LIKE '%Public Rack%' AND 
+    clean_stations.start_station_name NOT LIKE '%Charging%' AND
+    clean_stations.start_station_name NOT LIKE '%amp; %' AND
+    clean_stations.start_station_id is not null AND
+    clean_stations.end_station_name is not null AND
+    clean_stations.end_station_name NOT LIKE '%*%' AND
+    clean_stations.end_station_name NOT LIKE '%Public Rack%' AND 
+    clean_stations.end_station_name NOT LIKE '%Charging%' AND
+    clean_stations.end_station_name NOT LIKE '%amp; %' AND
+    clean_stations.end_station_id is not null
+
+-----------------------------------------------------
+
