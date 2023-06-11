@@ -1,4 +1,4 @@
-# 1) Merging tables
+*1) Merging tables
 SELECT DISTINCT ride_id, 
 rideable_type, 
 started_at, 
@@ -33,7 +33,7 @@ UNION ALL
 
 (etc. for the rest of the tables)
 -----------------------------------------------------
-2) CAST for days of the week
+*2) CAST for days of the week
 
 UPDATE 
 `cyclistic-379109.12month.final` 
@@ -52,7 +52,7 @@ WHERE
 started_day IN ('1', '2', '3', '4', '5', '6', '7')
 -----------------------------------------------------
 
-3) Median ride length by day
+*3) Median ride length by day
 SELECT
         DISTINCT median_ride_length,
         member_casual,
@@ -74,7 +74,7 @@ WHERE
 ORDER BY
         median_ride_length DESC
 -----------------------------------------------------
-4) Median ride length total
+*4) Median ride length total
 SELECT
 DISTINCT median_ride_length,
 member_casual
@@ -88,7 +88,7 @@ FROM `cyclistic-379109.12month.final` )
 ORDER BY 
 median_ride_length DESC 
 -----------------------------------------------------
-5) No of rides per day
+*5) No of rides per day
 
 SELECT  
         started_day,
@@ -102,7 +102,7 @@ started_day
 ORDER BY 
 Total DESC 
 -----------------------------------------------------
-6) No of rides by hour per day
+*6) No of rides by hour per day
 SELECT
         hour,
         no_of_rides,
@@ -137,7 +137,7 @@ GROUP BY
 ORDER BY 
         no_of_rides desc
 -----------------------------------------------------
-7) No of rides per month by customer type
+*7) No of rides per month by customer type
 SELECT 
     member_casual,
     COUNT(ride_id) AS number_of_rides,
@@ -150,7 +150,7 @@ GROUP BY
 ORDER BY 
     number_of_rides desc
 -----------------------------------------------------
-8) Total trips by customer type
+*8) Total trips by customer type
 SELECT 
         TotalTrips,
         TotalMemberTrips,
@@ -166,7 +166,7 @@ FROM
         FROM
                 `cyclistic-379109.12month.final`) 
 -----------------------------------------------------
-9) Bike type
+*9) Bike type
 SELECT 
     member_casual,
     rideable_type,
@@ -177,7 +177,7 @@ GROUP BY
     member_casual,
     rideable_type
 -----------------------------------------------------
-10) Finding popular stations
+*10) Finding popular stations
 #Explanation:
 The code first creates a temporary table called "all_data". 
 It selects data from two tables where the "start_station_name" and "end_station_name" columns are combined into a single column called "station_name". 
@@ -241,7 +241,7 @@ ORDER BY
 LIMIT 
     400
 -----------------------------------------------------
-11) Checking for unique station names by AVG lat and long
+*11) Checking for unique station names by AVG lat and long
 #Explanation: 
 The query first creates a CTE called names that selects the distinct start and end station names, 
 and rounds the average latitude and longitude values for each station to three decimal places. 
@@ -338,7 +338,7 @@ WHERE
     names.lng = duplicates.lng
 ORDER BY duplicates.cnt DESC, duplicates.lat ASC, duplicates.lng ASC
 -----------------------------------------------------
-12) Data cleaning final query 
+*12) Data cleaning final query 
 #Explanation:
 The query first creates a temporary table named "alltable" that selects all columns from the "fullyear" table. 
 It then creates another temporary table named "clean_stations" that selects the ride ID, start and end station IDs, 
@@ -350,8 +350,6 @@ and hour the ride started.
 Finally, the query selects specific columns from the "alltable", "clean_stations", and "newtable" tables and joins them based on ride ID. 
 It also filters out rows where the start or end station name or ID is NULL and contains specific substrings that were removed earlier in the cleaning process. 
 (Upon further inspection I noticed that many rows were not filtered using REPLACE function, so I decided to delete them).
-
-
 
 
 WITH
